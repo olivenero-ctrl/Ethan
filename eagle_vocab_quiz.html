@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦅 Eagle 단어 퀴즈</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Baloo+2:wght@700;800&display=swap');
+
+  :root {
+    --sky: #4FC3F7;
+    --deep-sky: #0288D1;
+    --sun: #FFD54F;
+    --sun-dark: #FF8F00;
+    --grass: #66BB6A;
+    --correct: #43A047;
+    --wrong: #E53935;
+    --cloud: #FFFFFF;
+    --bg: #E3F2FD;
+    --card: #FFFFFF;
+    --text: #1A237E;
+    --muted: #78909C;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, var(--deep-sky) 0%, var(--sky) 100%);
+    padding: 18px 16px 14px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: "☁️";
+    font-size: 40px;
+    position: absolute;
+    top: 6px; left: 10px;
+    opacity: .7;
+    animation: float 4s ease-in-out infinite;
+  }
+  header::after {
+    content: "☁️";
+    font-size: 28px;
+    position: absolute;
+    top: 14px; right: 16px;
+    opacity: .5;
+    animation: float 5s ease-in-out infinite reverse;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  header h1 {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2rem;
+    color: #fff;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 6px rgba(0,0,0,.25);
+  }
+  header p {
+    color: rgba(255,255,255,.9);
+    font-size: .85rem;
+    margin-top: 4px;
+  }
+
+  /* ── SCREEN SYSTEM ── */
+  .screen { display: none; padding: 16px; max-width: 480px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* ── HOME ── */
+  .hero-eagle {
+    font-size: 5rem;
+    text-align: center;
+    margin: 18px 0 8px;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .home-title {
+    text-align: center;
+    color: var(--text);
+    font-size: 1.2rem;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+  .home-sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: .82rem;
+    margin-bottom: 24px;
+  }
+
+  .mode-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 18px 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 4px 16px rgba(2,136,209,.12);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform .15s, border-color .15s, box-shadow .15s;
+    text-decoration: none;
+  }
+  .mode-card:active { transform: scale(.97); }
+  .mode-card:hover { border-color: var(--sky); box-shadow: 0 6px 22px rgba(2,136,209,.22); }
+  .mode-icon { font-size: 2.4rem; flex-shrink: 0; }
+  .mode-info h3 { color: var(--text); font-size: 1rem; font-weight: 700; }
+  .mode-info p { color: var(--muted); font-size: .78rem; margin-top: 3px; }
+
+  .badge {
+    background: var(--sun);
+    color: var(--sun-dark);
+    font-size: .7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 6px;
+  }
+
+  /* ── QUIZ SCREEN ── */
+  .quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .progress-wrap {
+    flex: 1;
+    background: #CFD8DC;
+    border-radius: 99px;
+    height: 10px;
+    overflow: hidden;
+    margin: 0 12px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sky), var(--deep-sky));
+    border-radius: 99px;
+    transition: width .4s ease;
+  }
+  .q-count { color: var(--text); font-weight: 700; font-size: .85rem; white-space: nowrap; }
+
+  .score-chip {
+    background: var(--sun);
+    color: var(--sun-dark);
+    font-weight: 900;
+    font-size: .85rem;
+    padding: 4px 12px;
+    border-radius: 99px;
+    white-space: nowrap;
+  }
+
+  .question-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 22px 18px;
+    box-shadow: 0 4px 20px rgba(2,136,209,.13);
+    margin-bottom: 18px;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .q-type-label {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--sky);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+  .q-text {
+    color: var(--text);
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.6;
+  }
+  .q-text .blank {
+    display: inline-block;
+    min-width: 80px;
+    border-bottom: 3px solid var(--deep-sky);
+    color: var(--deep-sky);
+    font-style: italic;
+    padding: 0 4px;
+  }
+  .q-text .hint {
+    font-size: .78rem;
+    color: var(--muted);
+    font-weight: 400;
+    display: block;
+    margin-top: 6px;
+  }
+
+  .answer-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .answer-input {
+    flex: 1;
+    border: 2.5px solid #CFD8DC;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 1rem;
+    font-family: inherit;
+    color: var(--text);
+    outline: none;
+    transition: border-color .2s;
+    background: #FAFAFA;
+  }
+  .answer-input:focus { border-color: var(--sky); background: #fff; }
+  .answer-input.correct { border-color: var(--correct); background: #E8F5E9; }
+  .answer-input.wrong { border-color: var(--wrong); background: #FFEBEE; }
+
+  .btn {
+    border: none;
+    border-radius: 14px;
+    padding: 12px 20px;
+    font-size: .95rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform .1s, box-shadow .1s;
+    color: #fff;
+  }
+  .btn:active { transform: scale(.96); }
+  .btn-check {
+    background: linear-gradient(135deg, var(--deep-sky), var(--sky));
+    box-shadow: 0 4px 12px rgba(2,136,209,.35);
+  }
+  .btn-next {
+    width: 100%;
+    background: linear-gradient(135deg, var(--grass), #388E3C);
+    box-shadow: 0 4px 12px rgba(67,160,71,.35);
+    padding: 14px;
+    font-size: 1rem;
+    display: none;
+  }
+  .btn-next.visible { display: block; }
+
+  .feedback {
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: .9rem;
+    font-weight: 700;
+    display: none;
+    margin-bottom: 10px;
+    animation: popIn .25s ease;
+  }
+  @keyframes popIn {
+    0% { transform: scale(.9); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .feedback.correct { background: #E8F5E9; color: var(--correct); display: block; }
+  .feedback.wrong { background: #FFEBEE; color: var(--wrong); display: block; }
+
+  /* ── RESULT ── */
+  .result-card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 28px 20px;
+    text-align: center;
+    box-shadow: 0 6px 28px rgba(2,136,209,.15);
+    margin-bottom: 20px;
+  }
+  .result-emoji { font-size: 4.5rem; margin-bottom: 10px; }
+  .result-msg { font-size: 1.3rem; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+  .result-sub { color: var(--muted); font-size: .88rem; margin-bottom: 20px; }
+  .result-score {
+    font-family: 'Baloo 2', cursive;
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: var(--deep-sky);
+    line-height: 1;
+  }
+  .result-total { color: var(--muted); font-size: .85rem; }
+  .pass-bar {
+    background: #E3F2FD;
+    border-radius: 99px;
+    height: 12px;
+    overflow: hidden;
+    margin: 16px 0 6px;
+  }
+  .pass-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 1s ease;
+  }
+  .pass-label { font-size: .75rem; color: var(--muted); }
+
+  .review-list { margin-bottom: 16px; }
+  .review-item {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    border-left: 4px solid transparent;
+    font-size: .85rem;
+  }
+  .review-item.ok { border-color: var(--correct); }
+  .review-item.bad { border-color: var(--wrong); }
+  .review-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .review-q { color: var(--text); font-weight: 700; }
+  .review-a { color: var(--muted); font-size: .78rem; margin-top: 2px; }
+  .review-a span { color: var(--correct); font-weight: 700; }
+
+  .btn-home {
+    width: 100%;
+    background: linear-gradient(135deg, var(--deep-sky), var(--sky));
+    box-shadow: 0 4px 14px rgba(2,136,209,.35);
+    padding: 15px;
+    font-size: 1.05rem;
+    margin-top: 6px;
+  }
+
+  .section-title {
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 18px 0 8px;
+  }
+
+  /* ── STARS ── */
+  .stars { display: flex; justify-content: center; gap: 6px; margin: 10px 0; }
+  .star { font-size: 2rem; filter: grayscale(1) opacity(.3); transition: all .3s; }
+  .star.lit { filter: none; animation: starPop .4s ease; }
+  @keyframes starPop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🦅 Eagle 단어 퀴즈</h1>
+  <p>A2/V1 Lesson 1~3 · 시험 완벽 대비!</p>
+</header>
+
+<!-- HOME -->
+<div id="home" class="screen active">
+  <div class="hero-eagle">🦅</div>
+  <p class="home-title">어떤 연습을 할까요?</p>
+  <p class="home-sub">통과 기준: 30문항 중 24개 이상 ✨</p>
+
+  <div class="mode-card" onclick="startMode('chunk')">
+    <div class="mode-icon">✍️</div>
+    <div class="mode-info">
+      <h3>단어 청크 쓰기 <span class="badge">유형 1</span></h3>
+      <p>한국어 뜻을 보고 영어 표현 쓰기 · 15문항</p>
+    </div>
+  </div>
+
+  <div class="mode-card" onclick="startMode('sentence')">
+    <div class="mode-icon">📝</div>
+    <div class="mode-info">
+      <h3>문장 빈칸 채우기 <span class="badge">유형 2</span></h3>
+      <p>문장의 빈칸에 알맞은 단어 쓰기 · 15문항</p>
+    </div>
+  </div>
+
+  <div class="mode-card" onclick="startMode('full')">
+    <div class="mode-icon">🏆</div>
+    <div class="mode-info">
+      <h3>실전 모의고사 <span class="badge">전체</span></h3>
+      <p>두 유형 합쳐서 30문항 한 번에!</p>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="quiz" class="screen">
+  <div class="quiz-header">
+    <span class="q-count" id="qCount">1/15</span>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+    <span class="score-chip" id="scoreChip">⭐ 0</span>
+  </div>
+
+  <div class="question-card">
+    <div class="q-type-label" id="qTypeLabel"></div>
+    <div class="q-text" id="qText"></div>
+  </div>
+
+  <div class="answer-wrap">
+    <input class="answer-input" id="answerInput" type="text" placeholder="여기에 답을 써요!" autocomplete="off" autocorrect="off" spellcheck="false">
+    <button class="btn btn-check" onclick="checkAnswer()">확인</button>
+  </div>
+
+  <div class="feedback" id="feedback"></div>
+  <button class="btn btn-next" id="btnNext" onclick="nextQuestion()">다음 문제 →</button>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="screen">
+  <div class="result-card">
+    <div class="result-emoji" id="resultEmoji">🎉</div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-total" id="resultTotal"></div>
+    <div class="stars" id="stars">
+      <span class="star" id="s1">⭐</span>
+      <span class="star" id="s2">⭐</span>
+      <span class="star" id="s3">⭐</span>
+    </div>
+    <div class="pass-bar"><div class="pass-fill" id="passFill"></div></div>
+    <div class="pass-label" id="passLabel"></div>
+  </div>
+
+  <div class="section-title">📋 문제 리뷰</div>
+  <div class="review-list" id="reviewList"></div>
+
+  <button class="btn btn-home" onclick="goHome()">🏠 처음으로</button>
+</div>
+
+<script>
+// ── DATA ──
+const chunks = [
+  { chunk: "occupy the position", def: "그 지위를 차지하다" },
+  { chunk: "weather fluctuation", def: "기상 변화" },
+  { chunk: "radiation poisoning", def: "방사선 중독" },
+  { chunk: "considerable tax revenue", def: "상당한 양의 세금 수입" },
+  { chunk: "upper atmosphere", def: "상부 대기권" },
+  { chunk: "price stability", def: "물가 안정" },
+  { chunk: "instill confidence", def: "자신감을 심어주다" },
+  { chunk: "tooth decay", def: "충치" },
+  { chunk: "a high degree of accuracy", def: "고도의 정밀함" },
+  { chunk: "fictional characters", def: "가상 인물" },
+  { chunk: "geared toward the younger", def: "젊은 층에 맞춰진" },
+  { chunk: "classical literature", def: "고전 문학" },
+  { chunk: "appropriate epithet", def: "적절한 별칭" },
+  { chunk: "lure with bait", def: "미끼로 유인하다" },
+  { chunk: "livestock farming", def: "목축업" },
+  { chunk: "optimistic view", def: "낙관적인 견해" },
+  { chunk: "commodity exchange", def: "상품 거래소" },
+  { chunk: "rebut an allegation", def: "혐의를 반박하다" },
+  { chunk: "patriarchal family", def: "가부장적 가정" },
+  { chunk: "benign smile", def: "상냥한 미소" }
+];
+
+// Sentence blanks: answer is the bold word(s) from the PDF
+const sentences = [
+  { 
+    sentence: "Conditions in a forest are quite ___ from those in an open field bordering it.",
+    answer: "different",
+    hint: "숲 속의 환경은 옆에 펼쳐진 들판의 환경과 꽤 ___합니다."
+  },
+  {
+    sentence: "Each ___ of an environment has a critical influence on the plants and animals that live there.",
+    answer: "factor",
+    hint: "환경의 각 ___은 그곳에 사는 동식물에 중요한 영향을 미칩니다."
+  },
+  {
+    sentence: "If an organism is to live in a certain ___, it must be able to obtain the resources it needs.",
+    answer: "habitat",
+    hint: "생물이 특정 ___에서 살려면 필요한 자원을 얻을 수 있어야 합니다."
+  },
+  {
+    sentence: "An organism's ability to ___ a variety of environmental conditions is called its tolerance.",
+    answer: "withstand",
+    hint: "다양한 환경 조건을 ___하는 능력을 내성이라고 합니다."
+  },
+  {
+    sentence: "The Earth's ___ has a vital role to play in the natural processes which affect us daily.",
+    answer: "core",
+    hint: "지구의 ___는 우리의 일상에 영향을 미치는 자연 과정에서 중요한 역할을 합니다."
+  },
+  {
+    sentence: "A number of important characteristics of the Earth's core have been revealed by ___ research.",
+    answer: "seismological",
+    hint: "지구 핵의 많은 특성들이 ___ 연구에 의해 밝혀졌습니다."
+  },
+  {
+    sentence: "Without its magnetic field, the Earth would be subjected to more cosmic ___.",
+    answer: "radiation",
+    hint: "자기장이 없다면 지구는 더 많은 우주 ___에 노출될 것입니다."
+  },
+  {
+    sentence: "___, the circulatory motion of a fluid involving the transfer of heat, is vital to the magnetic dynamo.",
+    answer: "Convection",
+    hint: "열 전달을 포함한 유체의 순환 운동인 ___은 자기 다이나모에 필수적입니다."
+  },
+  {
+    sentence: "This heat was ___ inside the core when the outer mantle hardened.",
+    answer: "trapped",
+    hint: "이 열은 외부 맨틀이 굳었을 때 핵 내부에 ___ 있었습니다."
+  },
+  {
+    sentence: "Even if the tiger were to be anointed its rightful crown, it may be in ___.",
+    answer: "vain",
+    hint: "호랑이가 정당한 왕관을 받는다 해도 소용 ___일 수 있습니다."
+  },
+  {
+    sentence: "Conservationists have redoubled their efforts to ___ the root causes of the shrinking numbers.",
+    answer: "address",
+    hint: "보전론자들은 개체수 감소의 근본 원인을 ___하기 위해 노력을 배가했습니다."
+  },
+  {
+    sentence: "___ has been a major factor in the habitat loss.",
+    answer: "Deforestation",
+    hint: "___은 서식지 손실의 주요 원인이었습니다."
+  },
+  {
+    sentence: "Farming is another threat that often ___ deforestation.",
+    answer: "accompanies",
+    hint: "농업은 종종 삼림 벌채를 ___하는 또 다른 위협입니다."
+  },
+  {
+    sentence: "To protect their ___, farmers will trap and shoot tigers.",
+    answer: "livelihood",
+    hint: "농부들은 자신들의 ___을 보호하기 위해 호랑이를 포획하고 쏘기도 합니다."
+  },
+  {
+    sentence: "The second Fugitive Slave Act ___ anyone who aided runaway slaves.",
+    answer: "punished",
+    hint: "두 번째 도망 노예법은 도주 노예를 도운 사람을 ___했습니다."
+  }
+];
+
+// ── STATE ──
+let questions = [];
+let currentIndex = 0;
+let score = 0;
+let answered = false;
+let results = [];
+
+// ── HELPERS ──
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function normalize(str) {
+  return str.toLowerCase().trim().replace(/\s+/g, ' ');
+}
+
+// ── MODE START ──
+function startMode(mode) {
+  questions = [];
+  score = 0;
+  currentIndex = 0;
+  results = [];
+  answered = false;
+
+  if (mode === 'chunk' || mode === 'full') {
+    const pool = shuffle(chunks);
+    const count = mode === 'chunk' ? 15 : 15;
+    pool.slice(0, count).forEach(c => {
+      questions.push({ type: 'chunk', def: c.def, answer: c.chunk });
+    });
+  }
+
+  if (mode === 'sentence' || mode === 'full') {
+    const pool = shuffle(sentences);
+    pool.slice(0, 15).forEach(s => {
+      questions.push({ type: 'sentence', sentence: s.sentence, answer: s.answer, hint: s.hint });
+    });
+  }
+
+  if (mode === 'full') {
+    questions = shuffle(questions);
+  }
+
+  showScreen('quiz');
+  renderQuestion();
+}
+
+// ── RENDER QUESTION ──
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentIndex];
+  const total = questions.length;
+
+  document.getElementById('qCount').textContent = `${currentIndex + 1}/${total}`;
+  document.getElementById('progressBar').style.width = `${(currentIndex / total) * 100}%`;
+  document.getElementById('scoreChip').textContent = `⭐ ${score}`;
+
+  const input = document.getElementById('answerInput');
+  input.value = '';
+  input.className = 'answer-input';
+  input.disabled = false;
+  input.focus();
+
+  document.getElementById('feedback').className = 'feedback';
+  document.getElementById('btnNext').classList.remove('visible');
+
+  if (q.type === 'chunk') {
+    document.getElementById('qTypeLabel').textContent = '✍️ 유형 1 · 영어로 써보세요';
+    document.getElementById('qText').innerHTML = `<span>${q.def}</span><span class="hint">위의 뜻에 맞는 영어 표현을 쓰세요.</span>`;
+  } else {
+    const display = q.sentence.replace('___', '<span class="blank">　　　　</span>');
+    document.getElementById('qTypeLabel').textContent = '📝 유형 2 · 빈칸을 채우세요';
+    document.getElementById('qText').innerHTML = `${display}<span class="hint">💡 ${q.hint}</span>`;
+  }
+}
+
+// ── CHECK ANSWER ──
+function checkAnswer() {
+  if (answered) return;
+  const input = document.getElementById('answerInput');
+  const userAns = normalize(input.value);
+  const q = questions[currentIndex];
+  const correct = normalize(q.answer);
+
+  answered = true;
+  input.disabled = true;
+
+  const feedback = document.getElementById('feedback');
+  const isCorrect = userAns === correct;
+
+  results.push({ q, userAns, isCorrect });
+
+  if (isCorrect) {
+    score++;
+    input.classList.add('correct');
+    feedback.className = 'feedback correct';
+    feedback.textContent = '🎉 정답이에요! 잘했어요!';
+    document.getElementById('scoreChip').textContent = `⭐ ${score}`;
+  } else {
+    input.classList.add('wrong');
+    feedback.className = 'feedback wrong';
+    feedback.textContent = `❌ 정답: ${q.answer}`;
+  }
+
+  document.getElementById('btnNext').classList.add('visible');
+}
+
+// ── NEXT QUESTION ──
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex >= questions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ── SHOW RESULT ──
+function showResult() {
+  const total = questions.length;
+  const pct = Math.round((score / total) * 100);
+  const passed = score >= 24 || (total < 30 && score / total >= 24 / 30);
+  // For partial modes, pass if score/total >= 0.8
+  const partialPass = score / total >= 0.8;
+
+  document.getElementById('resultScore').textContent = score;
+  document.getElementById('resultTotal').textContent = `/ ${total} 문항`;
+
+  const fill = document.getElementById('passFill');
+  fill.style.width = '0%';
+  fill.style.background = partialPass
+    ? 'linear-gradient(90deg, #66BB6A, #388E3C)'
+    : 'linear-gradient(90deg, #EF9A9A, #E53935)';
+  setTimeout(() => { fill.style.width = `${pct}%`; }, 100);
+
+  document.getElementById('passLabel').textContent = `정답률 ${pct}% · 통과 기준 80% (24/30)`;
+
+  let emoji, msg, sub;
+  if (pct === 100) {
+    emoji = '🏆'; msg = '완벽해요!'; sub = '100점 만점이에요! 진짜 독수리!';
+  } else if (partialPass) {
+    emoji = '🎉'; msg = '통과!'; sub = '잘했어요! 계속 이렇게 해요!';
+  } else if (pct >= 60) {
+    emoji = '💪'; msg = '조금만 더!'; sub = '80%가 목표예요. 한 번 더 도전!';
+  } else {
+    emoji = '😊'; msg = '다시 해봐요!'; sub = '단어를 더 연습하고 다시 도전해요!';
+  }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultMsg').textContent = msg;
+  document.getElementById('resultSub').textContent = sub;
+
+  // Stars
+  const thresholds = [0.5, 0.8, 1.0];
+  ['s1','s2','s3'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('lit');
+    if (pct / 100 >= thresholds[i] - 0.01) {
+      setTimeout(() => el.classList.add('lit'), 400 + i * 200);
+    }
+  });
+
+  // Review list
+  const reviewList = document.getElementById('reviewList');
+  reviewList.innerHTML = '';
+  results.forEach((r, i) => {
+    const item = document.createElement('div');
+    item.className = `review-item ${r.isCorrect ? 'ok' : 'bad'}`;
+    const qDisplay = r.q.type === 'chunk'
+      ? `<strong>${r.q.def}</strong>`
+      : `<strong>${r.q.sentence.replace('___', `<u>${r.q.answer}</u>`)}</strong>`;
+
+    item.innerHTML = `
+      <div class="review-icon">${r.isCorrect ? '✅' : '❌'}</div>
+      <div>
+        <div class="review-q">${i + 1}. ${r.q.type === 'chunk' ? r.q.def : '문장 빈칸'}</div>
+        <div class="review-a">
+          정답: <span>${r.q.answer}</span>
+          ${!r.isCorrect && r.userAns ? ` · 내 답: ${r.userAns}` : ''}
+        </div>
+      </div>
+    `;
+    reviewList.appendChild(item);
+  });
+
+  showScreen('result');
+}
+
+function goHome() {
+  showScreen('home');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Enter key to check / go next
+document.getElementById('answerInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (!answered) checkAnswer();
+    else nextQuestion();
+  }
+});
+</script>
+</body>
+</html>
